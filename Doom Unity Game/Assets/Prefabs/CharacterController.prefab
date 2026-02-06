@@ -188,7 +188,7 @@ MonoBehaviour:
   mouseSensitivity: 2
   cam: {fileID: 4445486160096762614}
   bobSpeed: 8
-  bobAmount: 0.05
+  bobAmount: 0.1
 --- !u!143 &6449407452052984510
 CharacterController:
   m_ObjectHideFlags: 0
