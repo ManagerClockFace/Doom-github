@@ -32,23 +32,41 @@ public class GunShooter : MonoBehaviour
     public TextMeshProUGUI ammoText;
 
     [Header("Reload UI")]
-    public GameObject reloadBarBG;     // The background bar
-    public Image reloadBarFill;        // The fill image
+    public GameObject reloadBarBG;
+    public Image reloadBarFill;
 
     [Header("Audio")]
     public AudioSource gunAudio;
+    public AudioSource emptySound;
+
+    [Header("Recoil")]
+    public float recoilAmount = 2f;
+    public float recoilRecoverySpeed = 6f;
+    private float currentRecoil = 0f;
+    private float recoilVelocity = 0f;
+
+    [Header("Gun Model Recoil")]
+    public Transform gunModel;
+    public float kickbackDistance = 0.1f;
+    public float kickbackSpeed = 12f;
+    public float returnSpeed = 8f;
+
+    private Vector3 originalGunPos;
+    private Vector3 currentGunOffset;
 
     void Start()
     {
         currentAmmo = maxAmmo;
         UpdateAmmoUI();
 
-        // Hide reload bar at start
         if (reloadBarBG != null)
             reloadBarBG.SetActive(false);
 
         if (reloadBarFill != null)
             reloadBarFill.fillAmount = 0f;
+
+        if (gunModel != null)
+            originalGunPos = gunModel.localPosition;
     }
 
     void Update()
@@ -66,12 +84,26 @@ public class GunShooter : MonoBehaviour
         {
             Shoot();
         }
+
+        // Smooth camera recoil
+        currentRecoil = Mathf.SmoothDamp(currentRecoil, 0f, ref recoilVelocity, 1f / recoilRecoverySpeed);
+        cam.transform.localRotation = Quaternion.Euler(currentRecoil, 0f, 0f);
+
+        // Smooth gun model recoil
+        currentGunOffset = Vector3.Lerp(currentGunOffset, Vector3.zero, returnSpeed * Time.deltaTime);
+
+        if (gunModel != null)
+            gunModel.localPosition = originalGunPos + currentGunOffset;
     }
 
     void Shoot()
     {
+        // EMPTY GUN CLICK
         if (currentAmmo <= 0)
         {
+            if (emptySound != null)
+                emptySound.Play();
+
             Debug.Log("Out of ammo!");
             return;
         }
@@ -80,12 +112,19 @@ public class GunShooter : MonoBehaviour
         UpdateAmmoUI();
         nextFireTime = Time.time + fireRate;
 
+        // Camera recoil
+        currentRecoil += recoilAmount;
+
+        // Gun model recoil
+        currentGunOffset -= new Vector3(0, 0, kickbackDistance);
+
         if (gunAudio != null)
             gunAudio.Play();
 
         if (muzzleFlash != null)
             muzzleFlash.Play();
 
+        // Projectile
         if (projectilePrefab != null && projectileSpawnPoint != null)
         {
             GameObject proj = Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
@@ -98,6 +137,7 @@ public class GunShooter : MonoBehaviour
             }
         }
 
+        // Raycast hit detection
         Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (Physics.Raycast(ray, out RaycastHit hit, range))
         {
@@ -121,7 +161,6 @@ public class GunShooter : MonoBehaviour
         isReloading = true;
         Debug.Log("Reloading...");
 
-        // Show reload bar
         if (reloadBarBG != null)
             reloadBarBG.SetActive(true);
 
@@ -141,7 +180,6 @@ public class GunShooter : MonoBehaviour
         isReloading = false;
         UpdateAmmoUI();
 
-        // Hide reload bar
         if (reloadBarBG != null)
             reloadBarBG.SetActive(false);
 
@@ -149,7 +187,7 @@ public class GunShooter : MonoBehaviour
             reloadBarFill.fillAmount = 0f;
     }
 
-    void UpdateAmmoUI()
+    public void UpdateAmmoUI()
     {
         if (ammoText != null)
             ammoText.text = currentAmmo + " / " + maxAmmo;
