@@ -2,42 +2,39 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour
 {
-    public float health = 50f;
+    [Header("Health Settings")]
+    public float maxHealth = 50f;
+    public float currentHealth;
 
-    [Header("Damage Number Settings")]
-    public GameObject damageNumberPrefab;
-    public Transform damageCanvas;
+    [Header("Death Settings")]
+    public GameObject deathEffect;   // optional particle effect
+    public float destroyDelay = 0.1f;
 
-    private float stackOffset = 0f;
+    void Start()
+    {
+        currentHealth = maxHealth;
+    }
 
     public void TakeDamage(float amount)
     {
-        health -= amount;
-        Debug.Log("Enemy health now: " + health);
+        currentHealth -= amount;
 
-        if (damageNumberPrefab != null && damageCanvas != null)
+        if (currentHealth <= 0f)
         {
-            GameObject dmg = Instantiate(damageNumberPrefab, damageCanvas);
-
-            DamageNumber dn = dmg.GetComponent<DamageNumber>();
-            if (dn != null)
-            {
-                dn.SetText(amount.ToString());
-                dn.SetTarget(transform, stackOffset);
-            }
-
-            stackOffset += 0.5f;
-        }
-
-        if (health <= 0f)
-        {
-            stackOffset = 0f;
             Die();
         }
     }
 
     void Die()
     {
-        Destroy(gameObject);
+        // Register kill for laser wall / boss room logic
+        if (EnemyKillManager.instance != null)
+            EnemyKillManager.instance.RegisterKill();
+
+        // Spawn death effect
+        if (deathEffect != null)
+            Instantiate(deathEffect, transform.position, Quaternion.identity);
+
+        Destroy(gameObject, destroyDelay);
     }
 }
