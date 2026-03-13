@@ -428,6 +428,8 @@ MonoBehaviour:
   range: 100
   impactEffect: {fileID: 100002, guid: f75efcef4bb42054abf94f8e5c701adc, type: 3}
   fireRate: 0.25
+  maxAmmo: 6
+  currentAmmo: 0
   reloadTime: 1.5
   ammoText: {fileID: 0}
   reloadBarBG: {fileID: 0}
@@ -436,7 +438,7 @@ MonoBehaviour:
   emptySound: {fileID: 1891873385378613127}
   recoilAmount: 2
   recoilRecoverySpeed: 6
-  gunModel: {fileID: 4709547096420156045}
+  gunModel: {fileID: 0}
   kickbackDistance: 0.1
   kickbackSpeed: 12
   returnSpeed: 8
